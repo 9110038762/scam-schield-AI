@@ -1,143 +1,43 @@
 {
-  "benchmark_models": {
+  "evaluation_timestamp": "2026-09-20T19:25:18Z",
+  "test_set_size": 824,
+  "safe_test_samples": 602,
+  "scam_test_samples": 222,
+  "random_state": 42,
+  "models": {
     "logistic_regression": {
-      "model_name": "Logistic Regression",
-      "accuracy": 0.9806,
-      "scam_precision": 0.9638,
-      "scam_recall": 0.9638,
-      "scam_f1": 0.9638,
-      "macro_f1": 0.9753,
-      "weighted_f1": 0.9806,
-      "inference_latency_ms": 0.0002,
+      "model_name": "Logistic Regression (TF-IDF)",
+      "accuracy": 0.9842,
+      "precision": 0.9686,
+      "recall": 0.973,
+      "f1": 0.9708,
+      "macro_f1": 0.98,
+      "weighted_f1": 0.9842,
+      "inference_latency_ms": 0.00021,
       "confusion_matrix": {
         "true_negative": 595,
-        "false_positive": 8,
-        "false_negative": 8,
-        "true_positive": 213
+        "false_positive": 7,
+        "false_negative": 6,
+        "true_positive": 216
       },
       "test_samples": 824
     },
     "multinomial_naive_bayes": {
-      "model_name": "Multinomial Naive Bayes",
-      "accuracy": 0.9782,
-      "scam_precision": 0.9721,
-      "scam_recall": 0.9457,
-      "scam_f1": 0.9587,
-      "macro_f1": 0.9719,
-      "weighted_f1": 0.9781,
-      "inference_latency_ms": 0.0005,
-      "confusion_matrix": {
-        "true_negative": 597,
-        "false_positive": 6,
-        "false_negative": 12,
-        "true_positive": 209
-      },
-      "test_samples": 824
-    },
-    "linear_svm": {
-      "model_name": "Linear SVM (Calibrated)",
+      "model_name": "Multinomial Naive Bayes (TF-IDF)",
       "accuracy": 0.983,
-      "scam_precision": 0.9683,
-      "scam_recall": 0.9683,
-      "scam_f1": 0.9683,
-      "macro_f1": 0.9784,
-      "weighted_f1": 0.983,
-      "inference_latency_ms": 0.001,
-      "confusion_matrix": {
-        "true_negative": 596,
-        "false_positive": 7,
-        "false_negative": 7,
-        "true_positive": 214
-      },
-      "test_samples": 824
-    },
-    "distilbert": {
-      "model_name": "DistilBERT (Fine-tuned)",
-      "accuracy": 0.9879,
-      "scam_precision": 0.9774,
-      "scam_recall": 0.9774,
-      "scam_f1": 0.9774,
-      "macro_f1": 0.9845,
-      "weighted_f1": 0.9879,
-      "inference_latency_ms": 8.921,
+      "precision": 0.9815,
+      "recall": 0.955,
+      "f1": 0.968,
+      "macro_f1": 0.9782,
+      "weighted_f1": 0.9829,
+      "inference_latency_ms": 0.00025,
       "confusion_matrix": {
         "true_negative": 598,
-        "false_positive": 5,
-        "false_negative": 5,
-        "true_positive": 216
+        "false_positive": 4,
+        "false_negative": 10,
+        "true_positive": 212
       },
       "test_samples": 824
     }
-  },
-  "dataset_experiments": {
-    "exp1_uci_baseline": {
-      "name": "Logistic Regression on UCI SMS Spam Collection",
-      "train_samples": 4143,
-      "test_samples": 501,
-      "metrics": {
-        "model_name": "LR (UCI SMS Spam Collection)",
-        "accuracy": 0.982,
-        "scam_precision": 0.9231,
-        "scam_recall": 0.9057,
-        "scam_f1": 0.9143,
-        "macro_f1": 0.9521,
-        "weighted_f1": 0.982,
-        "inference_latency_ms": 0.0002,
-        "confusion_matrix": {
-          "true_negative": 444,
-          "false_positive": 4,
-          "false_negative": 5,
-          "true_positive": 48
-        },
-        "test_samples": 501
-      }
-    },
-    "exp2_india_scam": {
-      "name": "Logistic Regression on Scam/Spam India Dataset",
-      "train_samples": 1790,
-      "test_samples": 234,
-      "metrics": {
-        "model_name": "LR (Scam/Spam India Dataset)",
-        "accuracy": 0.9744,
-        "scam_precision": 0.9681,
-        "scam_recall": 0.9681,
-        "scam_f1": 0.9681,
-        "macro_f1": 0.9733,
-        "weighted_f1": 0.9744,
-        "inference_latency_ms": 0.0004,
-        "confusion_matrix": {
-          "true_negative": 137,
-          "false_positive": 3,
-          "false_negative": 3,
-          "true_positive": 91
-        },
-        "test_samples": 234
-      }
-    },
-    "exp3_phonecall_hinglish": {
-      "name": "Logistic Regression on Indian Cyber Scam PhoneCall Hinglish",
-      "train_samples": 587,
-      "test_samples": 79,
-      "metrics": {
-        "model_name": "LR (Indian Cyber Scam PhoneCall Hinglish)",
-        "accuracy": 1.0,
-        "scam_precision": 1.0,
-        "scam_recall": 1.0,
-        "scam_f1": 1.0,
-        "macro_f1": 1.0,
-        "weighted_f1": 1.0,
-        "inference_latency_ms": 0.0011,
-        "confusion_matrix": {
-          "true_negative": 12,
-          "false_positive": 0,
-          "false_negative": 0,
-          "true_positive": 67
-        },
-        "test_samples": 79
-      }
-    }
-  },
-  "evaluation_timestamp": "2026-09-20T18:52:28Z",
-  "test_set_size": 824,
-  "random_seed": 42
+  }
 }

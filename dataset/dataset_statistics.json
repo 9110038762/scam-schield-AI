@@ -1,59 +1,46 @@
 {
-  "raw_source_counts": {
-    "uci_sms_count": 5574,
-    "india_scam_count": 2272,
-    "hinglish_scam_count": 3787,
-    "phonecall_hinglish_count": 10000,
-    "total_raw_rows": 21633
-  },
-  "duplicates_removed": 13383,
-  "total_unique_samples": 8233,
+  "total_raw_records": 21633,
+  "duplicates_removed": 13379,
+  "final_dataset_size": 8236,
   "label_distribution": {
-    "SCAM": 2203,
-    "SAFE": 6030,
-    "SCAM_percentage": 26.76,
-    "SAFE_percentage": 73.24
-  },
-  "splits": {
-    "train_count": 6586,
-    "validation_count": 823,
-    "test_count": 824,
-    "random_seed": 42,
-    "split_ratios": "80% / 10% / 10%"
+    "SCAM": 2217,
+    "SAFE": 6019,
+    "SCAM_percentage": 26.92,
+    "SAFE_percentage": 73.08
   },
   "category_distribution": {
-    "SAFE": 6030,
-    "OTHER_SCAM": 992,
+    "SAFE": 6019,
+    "OTHER_SCAM": 1029,
     "DIGITAL_ARREST": 402,
     "PHISHING": 242,
+    "LOTTERY_SCAM": 126,
     "BLACKMAIL": 126,
-    "LOTTERY_SCAM": 124,
-    "KYC_FRAUD": 80,
-    "OTP_FRAUD": 61,
+    "KYC_FRAUD": 79,
     "REFUND_SCAM": 57,
+    "OTP_FRAUD": 41,
     "BANK_FRAUD": 38,
     "UPI_FRAUD": 31,
-    "IMPERSONATION": 21,
+    "IMPERSONATION": 18,
     "COURIER_SCAM": 18,
     "JOB_SCAM": 5,
-    "ELECTRICITY_SCAM": 5,
-    "THREAT": 1
-  },
-  "category_provenance_distribution": {
-    "default_safe": 6030,
-    "fallback_other": 992,
-    "mapped": 633,
-    "inferred": 578
+    "ELECTRICITY_SCAM": 5
   },
   "language_distribution": {
-    "English": 7340,
+    "English": 7343,
     "Hinglish": 884,
     "Other": 9
   },
-  "source_dataset_distribution": {
-    "UCI SMS Spam Collection": 5144,
-    "Scam/Spam India Dataset": 2259,
-    "Indian Cyber Scam PhoneCall Hinglish": 743,
-    "Hinglish & English Financial Scam": 87
+  "source_distribution": {
+    "UCI SMS Spam Collection": 5157,
+    "Scam/Spam India Dataset": 2249,
+    "Indian Cyber Scam PhoneCall Hinglish Dataset": 743,
+    "Hinglish Scam Text Dataset": 87
+  },
+  "splits": {
+    "train_size": 6588,
+    "validation_size": 824,
+    "test_size": 824,
+    "random_state": 42,
+    "split_ratios": "80% / 10% / 10%"
   }
 }
