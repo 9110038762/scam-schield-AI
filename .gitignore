@@ -22,3 +22,27 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Large model artifacts
+*.pt
+*.pth
+*.bin
+*.onnx
+*.safetensors
+*.zip
+ml/models/*.pt
+backend/models/*.pt
+

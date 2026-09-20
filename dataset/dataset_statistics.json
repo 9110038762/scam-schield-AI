@@ -1,0 +1,59 @@
+{
+  "raw_source_counts": {
+    "uci_sms_count": 5574,
+    "india_scam_count": 2272,
+    "hinglish_scam_count": 3787,
+    "phonecall_hinglish_count": 10000,
+    "total_raw_rows": 21633
+  },
+  "duplicates_removed": 13383,
+  "total_unique_samples": 8233,
+  "label_distribution": {
+    "SCAM": 2203,
+    "SAFE": 6030,
+    "SCAM_percentage": 26.76,
+    "SAFE_percentage": 73.24
+  },
+  "splits": {
+    "train_count": 6586,
+    "validation_count": 823,
+    "test_count": 824,
+    "random_seed": 42,
+    "split_ratios": "80% / 10% / 10%"
+  },
+  "category_distribution": {
+    "SAFE": 6030,
+    "OTHER_SCAM": 992,
+    "DIGITAL_ARREST": 402,
+    "PHISHING": 242,
+    "BLACKMAIL": 126,
+    "LOTTERY_SCAM": 124,
+    "KYC_FRAUD": 80,
+    "OTP_FRAUD": 61,
+    "REFUND_SCAM": 57,
+    "BANK_FRAUD": 38,
+    "UPI_FRAUD": 31,
+    "IMPERSONATION": 21,
+    "COURIER_SCAM": 18,
+    "JOB_SCAM": 5,
+    "ELECTRICITY_SCAM": 5,
+    "THREAT": 1
+  },
+  "category_provenance_distribution": {
+    "default_safe": 6030,
+    "fallback_other": 992,
+    "mapped": 633,
+    "inferred": 578
+  },
+  "language_distribution": {
+    "English": 7340,
+    "Hinglish": 884,
+    "Other": 9
+  },
+  "source_dataset_distribution": {
+    "UCI SMS Spam Collection": 5144,
+    "Scam/Spam India Dataset": 2259,
+    "Indian Cyber Scam PhoneCall Hinglish": 743,
+    "Hinglish & English Financial Scam": 87
+  }
+}

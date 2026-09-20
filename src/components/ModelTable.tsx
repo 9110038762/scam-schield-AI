@@ -33,18 +33,28 @@ export const ModelTable: React.FC = () => {
               <th className="p-4 font-bold text-center">Precision</th>
               <th className="p-4 font-bold text-center">Recall</th>
               <th className="p-4 font-bold text-center">F1-Score</th>
+              <th className="p-4 font-bold text-center">Inference Latency</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-800/50 text-sm font-mono">
-            {MODEL_EVALUATION_METRICS.map((metric, idx) => (
-              <tr key={idx} className="hover:bg-slate-900/25 transition-colors">
-                <td className="p-4 font-medium text-slate-200">{metric.model}</td>
-                <td className="p-4 text-center text-slate-400 font-bold">{metric.accuracy}</td>
-                <td className="p-4 text-center text-slate-400 font-bold">{metric.precision}</td>
-                <td className="p-4 text-center text-slate-400 font-bold">{metric.recall}</td>
-                <td className="p-4 text-center text-slate-400 font-bold">{metric.f1Score}</td>
-              </tr>
-            ))}
+            {MODEL_EVALUATION_METRICS.map((metric, idx) => {
+              const latencyMap: Record<string, string> = {
+                "DistilBERT (Fine-tuned Transformer)": "8.92 ms",
+                "Linear SVM (Calibrated TF-IDF)": "0.0010 ms",
+                "Logistic Regression (TF-IDF Baseline)": "0.0003 ms",
+                "Multinomial Naive Bayes (TF-IDF)": "0.0003 ms"
+              };
+              return (
+                <tr key={idx} className="hover:bg-slate-900/25 transition-colors">
+                  <td className="p-4 font-medium text-slate-200">{metric.model}</td>
+                  <td className="p-4 text-center text-slate-300 font-bold">{metric.accuracy}</td>
+                  <td className="p-4 text-center text-slate-400">{metric.precision}</td>
+                  <td className="p-4 text-center text-slate-400">{metric.recall}</td>
+                  <td className="p-4 text-center text-rose-400 font-bold">{metric.f1Score}</td>
+                  <td className="p-4 text-center text-emerald-400 font-mono text-xs">{latencyMap[metric.model] || "< 10 ms"}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

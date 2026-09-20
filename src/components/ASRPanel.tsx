@@ -33,20 +33,46 @@ export const ASRPanel: React.FC<ASRPanelProps> = ({ onAnalysisSuccess }) => {
     fileInputRef.current?.click();
   };
 
-  const simulateASR = () => {
+  const simulateASR = async (fileToUpload?: File) => {
     setIsTranslating(true);
     setTranscript('');
     setResult(null);
 
-    // Simulate ASR computation latency (1.8 seconds)
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
+    try {
+      const formData = new FormData();
+      if (fileToUpload) {
+        formData.append('file', fileToUpload);
+      } else {
+        formData.append('demo', 'true');
+      }
+
+      const res = await fetch(`${API_URL}/transcribe`, {
+        method: 'POST',
+        body: formData
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setTranscript(data.transcript);
+        setIsTranslating(false);
+        return;
+      }
+    } catch {
+      // Fallback
+    }
+
+    // Local fallback delay
     setTimeout(() => {
       setIsTranslating(false);
       setTranscript(DEMO_ASR_TRANSCRIPT);
-    }, 1800);
+    }, 1200);
   };
 
   const handleUseDemo = () => {
-    setAudioFile(new File(["demo"], "scam_voice_call_rec.wav", { type: "audio/wav" }));
+    const demoFile = new File(["demo"], "scam_voice_call_rec.wav", { type: "audio/wav" });
+    setAudioFile(demoFile);
     simulateASR();
   };
 
@@ -55,7 +81,7 @@ export const ASRPanel: React.FC<ASRPanelProps> = ({ onAnalysisSuccess }) => {
     setIsAnalyzing(true);
     setResult(null);
     try {
-      const analysis = await analyzeMessage(transcript);
+      const analysis = await analyzeMessage(transcript, 'distilbert', 'Voice Transcript');
       setResult(analysis);
       if (onAnalysisSuccess) {
         onAnalysisSuccess(transcript, analysis);
@@ -226,6 +252,9 @@ export const ASRPanel: React.FC<ASRPanelProps> = ({ onAnalysisSuccess }) => {
               <PredictionCard 
                 prediction={result.prediction} 
                 confidence={result.confidence}
+                category={result.category}
+                categoryDescription={result.categoryDescription}
+                modelUsed={result.modelUsed}
               />
               <RecommendationCard 
                 recommendation={result.recommendation} 

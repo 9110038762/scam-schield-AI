@@ -1,6 +1,6 @@
 export type RiskLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 export type PredictionType = 'SCAM' | 'SAFE';
-export type InputType = 'SMS' | 'Email' | 'Voice Transcript' | 'Chat';
+export type InputType = 'SMS' | 'Email' | 'Voice Transcript' | 'Chat' | 'Call Transcript';
 
 export interface Indicator {
   name: string;
@@ -12,8 +12,15 @@ export interface AnalysisResult {
   confidence: number; // percentage (0-100)
   riskScore: number; // score (0-100)
   riskLevel: RiskLevel;
+  category?: string;
+  categoryDescription?: string;
+  language?: string;
   indicators: Indicator[];
+  explanation?: string[];
   recommendation: string;
+  modelUsed?: string;
+  latencyMs?: number;
+  isOfflineFallback?: boolean;
 }
 
 export interface HistoryRecord {
@@ -24,6 +31,9 @@ export interface HistoryRecord {
   prediction: PredictionType;
   riskLevel: RiskLevel;
   confidence: number;
+  category?: string;
+  language?: string;
+  modelUsed?: string;
   indicators: string[];
 }
 
