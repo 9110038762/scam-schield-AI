@@ -24,8 +24,8 @@ interface CallAudioBarProps {
   onActiveTurnChange: (index: number | null) => void;
   isPlaying: boolean;
   setIsPlaying: (playing: boolean) => void;
-  recordingSpeaker?: 'Caller' | 'Victim';
-  onRecordingSpeakerChange?: (speaker: 'Caller' | 'Victim') => void;
+  recordingSpeaker?: 'Caller' | 'Receiver' | 'Victim';
+  onRecordingSpeakerChange?: (speaker: 'Caller' | 'Receiver') => void;
 }
 
 export const CallAudioBar: React.FC<CallAudioBarProps> = ({
@@ -45,7 +45,8 @@ export const CallAudioBar: React.FC<CallAudioBarProps> = ({
   const [audioDuration, setAudioDuration] = useState<number | null>(null);
   const [asrStatusNote, setAsrStatusNote] = useState<string | null>(null);
 
-  const speakerRef = useRef<'Caller' | 'Victim'>(recordingSpeaker);
+  const normalizedSpeaker = (recordingSpeaker === 'Receiver' || recordingSpeaker === 'Victim') ? 'Receiver' : 'Caller';
+  const speakerRef = useRef<'Caller' | 'Receiver'>(normalizedSpeaker);
   const baseTranscriptRef = useRef<string>('');
   const sessionTextRef = useRef<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -56,7 +57,7 @@ export const CallAudioBar: React.FC<CallAudioBarProps> = ({
   const currentTurnIdxRef = useRef<number>(0);
 
   useEffect(() => {
-    speakerRef.current = recordingSpeaker;
+    speakerRef.current = (recordingSpeaker === 'Receiver' || recordingSpeaker === 'Victim') ? 'Receiver' : 'Caller';
   }, [recordingSpeaker]);
 
   // Clean up speech synthesis & recording on unmount
@@ -328,6 +329,8 @@ export const CallAudioBar: React.FC<CallAudioBarProps> = ({
     return `${mins < 10 ? '0' : ''}${mins}:${remaining < 10 ? '0' : ''}${remaining}`;
   };
 
+  const isReceiver = recordingSpeaker === 'Receiver' || recordingSpeaker === 'Victim';
+
   return (
     <div className="bg-slate-900/50 rounded-xl p-4 border border-cyan-900/40 space-y-4">
       {/* Header and Telephony Audio Status */}
@@ -372,45 +375,45 @@ export const CallAudioBar: React.FC<CallAudioBarProps> = ({
       <div className="flex flex-wrap items-center justify-between gap-2.5 px-3 py-2 rounded-lg bg-slate-950/70 border border-slate-800/90">
         <div className="flex items-center space-x-2.5">
           <span className="text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider flex items-center space-x-1">
-            <span>Microphone Role:</span>
+            <span>Active Microphone Speaker:</span>
           </span>
           <div className="flex items-center space-x-1.5">
             <button
               type="button"
               onClick={() => onRecordingSpeakerChange?.('Caller')}
               className={`flex items-center space-x-1.5 px-3 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
-                recordingSpeaker === 'Caller'
+                !isReceiver
                   ? 'bg-cyan-600 text-slate-950 font-bold shadow-[0_0_12px_rgba(6,182,212,0.4)]'
                   : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
               }`}
             >
               <PhoneCall className="w-3.5 h-3.5" />
-              <span>Caller (Suspect)</span>
+              <span>Caller</span>
             </button>
 
             <button
               type="button"
-              onClick={() => onRecordingSpeakerChange?.('Victim')}
+              onClick={() => onRecordingSpeakerChange?.('Receiver')}
               className={`flex items-center space-x-1.5 px-3 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
-                recordingSpeaker === 'Victim'
+                isReceiver
                   ? 'bg-emerald-600 text-slate-950 font-bold shadow-[0_0_12px_rgba(52,211,153,0.4)]'
                   : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
               }`}
             >
               <User className="w-3.5 h-3.5" />
-              <span>Victim (You / Receiver)</span>
+              <span>Receiver (You)</span>
             </button>
           </div>
         </div>
 
         <div className="flex items-center space-x-2 text-[11px] font-mono">
-          <span className="text-slate-500">Live Mic tags as:</span>
+          <span className="text-slate-500">Microphone tags as:</span>
           <span className={`px-2 py-0.5 rounded font-bold border ${
-            recordingSpeaker === 'Victim'
+            isReceiver
               ? 'bg-emerald-950/70 border-emerald-700/60 text-emerald-300'
               : 'bg-cyan-950/70 border-cyan-700/60 text-cyan-300'
           }`}>
-            {recordingSpeaker === 'Victim' ? '👤 Victim:' : '📞 Caller:'}
+            {isReceiver ? '👤 Receiver:' : '📞 Caller:'}
           </span>
         </div>
       </div>
@@ -451,23 +454,23 @@ export const CallAudioBar: React.FC<CallAudioBarProps> = ({
           disabled={isTranscribing || isPlaying}
           className={`flex items-center justify-center space-x-2 p-3 rounded-lg border transition-all text-xs font-semibold cursor-pointer disabled:opacity-50 ${
             isRecording
-              ? recordingSpeaker === 'Victim'
+              ? isReceiver
                 ? 'bg-emerald-950/90 border-emerald-500 text-emerald-200 shadow-[0_0_15px_rgba(52,211,153,0.3)] animate-pulse'
                 : 'bg-rose-950/90 border-rose-600 text-rose-200 shadow-[0_0_15px_rgba(244,63,94,0.3)] animate-pulse'
-              : recordingSpeaker === 'Victim'
+              : isReceiver
               ? 'bg-emerald-950/30 hover:bg-emerald-950/60 border-emerald-800/60 hover:border-emerald-500 text-emerald-300'
               : 'bg-slate-950/70 hover:bg-slate-900 border-slate-800 hover:border-cyan-500/50 text-slate-200'
           }`}
         >
           {isRecording ? (
             <>
-              <MicOff className={`w-4 h-4 ${recordingSpeaker === 'Victim' ? 'text-emerald-400' : 'text-rose-400'} animate-spin`} />
-              <span>Stop Recording {recordingSpeaker} ({formatTimer(recordingSeconds)})</span>
+              <MicOff className={`w-4 h-4 ${isReceiver ? 'text-emerald-400' : 'text-rose-400'} animate-spin`} />
+              <span>Stop Recording {isReceiver ? 'Receiver' : 'Caller'} ({formatTimer(recordingSeconds)})</span>
             </>
           ) : (
             <>
-              <Mic className={`w-4 h-4 ${recordingSpeaker === 'Victim' ? 'text-emerald-400' : 'text-cyan-400'}`} />
-              <span>Record Audio as {recordingSpeaker === 'Victim' ? 'Victim' : 'Caller'}</span>
+              <Mic className={`w-4 h-4 ${isReceiver ? 'text-emerald-400' : 'text-cyan-400'}`} />
+              <span>Record Audio as {isReceiver ? 'Receiver' : 'Caller'}</span>
             </>
           )}
         </button>
@@ -510,14 +513,14 @@ export const CallAudioBar: React.FC<CallAudioBarProps> = ({
         </div>
       )}
 
-      {/* Pre-recorded Phone Call Scam Samples */}
+      {/* Optional Preset Call Scenarios */}
       <div className="pt-2 border-t border-slate-800/60">
         <div className="flex items-center justify-between mb-2">
           <span className="text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider flex items-center space-x-1.5">
             <AudioLines className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Preset Phone Call Audio Scenarios:</span>
+            <span>Preset Scenarios (Optional Testing):</span>
           </span>
-          <span className="text-[10px] font-mono text-cyan-400/80">Click sample to load transcript & enable audio</span>
+          <span className="text-[10px] font-mono text-cyan-400/80">Optional: Click to test, or record/type your own call above</span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Play, RotateCcw, ChevronDown, ChevronUp, Cpu, RefreshCw, MessageSquare, PhoneCall } from 'lucide-react';
-import { SAMPLE_SCAMS, SAMPLE_CALL_TRANSCRIPTS } from '../data/mockData';
+import { SAMPLE_SCAMS } from '../data/mockData';
 import { analyzeMessage, checkBackendHealth } from '../services/scamDetection';
 import type { AnalysisResult, InputType } from '../types';
 import { PredictionCard } from './PredictionCard';
@@ -34,7 +34,7 @@ export const MessageAnalyzer: React.FC<MessageAnalyzerProps> = ({
   const [activeTurnIndex, setActiveTurnIndex] = useState<number | null>(null);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [activeSampleId, setActiveSampleId] = useState<string | undefined>(undefined);
-  const [recordingSpeaker, setRecordingSpeaker] = useState<'Caller' | 'Victim'>('Caller');
+  const [recordingSpeaker, setRecordingSpeaker] = useState<'Caller' | 'Receiver'>('Caller');
 
   useEffect(() => {
     checkBackendHealth().then(res => setBackendOnline(res.online));
@@ -202,9 +202,10 @@ export const MessageAnalyzer: React.FC<MessageAnalyzerProps> = ({
               if (window.speechSynthesis) window.speechSynthesis.cancel();
               setIsPlayingAudio(false);
               setMode('call_transcript'); 
-              setText(SAMPLE_CALL_TRANSCRIPTS[0].text); 
-              setActiveSampleId(SAMPLE_CALL_TRANSCRIPTS[0].id);
+              setText(''); 
+              setActiveSampleId(undefined);
               setResult(null); 
+              setRecordingSpeaker('Caller');
             }}
             className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               mode === 'call_transcript'

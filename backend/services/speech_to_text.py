@@ -22,24 +22,29 @@ logger = logging.getLogger("SpeechToTextService")
 
 PRESET_CALL_TRANSCRIPTS = {
     "call-1": (
-        "Caller: Hello, I am Inspector Sharma from the Delhi Cyber Crime Police Department.\n"
-        "Caller: An arrest warrant has been issued in your name for money laundering.\n"
+        "Caller: Hello, am I speaking with Mr. Rahul?\n"
+        "Receiver: Yes speaking, how may I help you?\n"
+        "Caller: I am Inspector Sharma from the Delhi Cyber Crime Police Department. An arrest warrant has been issued in your name for money laundering.\n"
+        "Receiver: What? That is impossible, there must be a misunderstanding.\n"
         "Caller: You are being placed under digital arrest right now. Keep your camera turned on and do not disconnect this call or local police will arrive."
     ),
     "call-2": (
-        "Caller: Good afternoon sir, I am speaking from your bank's central head office.\n"
-        "Caller: We notice that your PAN and Aadhaar KYC documents have expired today.\n"
-        "Caller: As per RBI regulations, your debit card and net banking will be permanently blocked by 5 PM.\n"
+        "Caller: Good afternoon sir, I am speaking from your bank's central customer support.\n"
+        "Receiver: Good afternoon, yes please tell me.\n"
+        "Caller: We notice that your PAN and Aadhaar KYC documents have expired today. As per RBI regulations, your debit card and net banking will be permanently blocked by 5 PM.\n"
+        "Receiver: Oh no, how do I stop that from happening?\n"
         "Caller: To complete immediate electronic re-verification, please read out the 6-digit verification code just delivered to your mobile."
     ),
     "call-3": (
-        "Caller: Sir, this is customs parcel clearance officer calling from Mumbai International Airport.\n"
-        "Caller: We have detained a FedEx parcel addressed to your name containing illegal foreign currency.\n"
-        "Caller: A legal FIR is being lodged unless you immediately transfer ₹25,000 clearance penalty fee."
+        "Caller: Hello sir, good morning. This is customs parcel clearance officer calling from Mumbai International Airport.\n"
+        "Receiver: Hello, what parcel is this regarding?\n"
+        "Caller: We have detained a FedEx parcel addressed to your name containing illegal foreign currency. A legal FIR is being lodged unless you immediately transfer ₹25,000 clearance penalty fee."
     ),
     "call-4": (
         "Caller: Haan bhai, main bol raha hoon. Kal project review meeting kitne baje rakha hai?\n"
-        "Caller: Theek hai, main laptop aur presentation slides leke college pahunch jaunga 10 baje."
+        "Receiver: Kal subah 10 baje rakha hai library mein. Presentation slides ready hai na?\n"
+        "Caller: Theek hai, main laptop aur presentation slides leke college pahunch jaunga 10 baje.\n"
+        "Receiver: Done bhai, kal milte hain phir."
     ),
     "demo": (
         "Caller: Good afternoon, this is an automated security alert from your bank's fraud monitoring cell.\n"
