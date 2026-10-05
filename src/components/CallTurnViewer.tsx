@@ -1,11 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   PhoneCall, 
   User, 
-  ShieldAlert, 
   Edit3, 
   MessageCircle, 
-  Plus, 
   Volume2, 
   Trash2, 
   Check, 
@@ -20,8 +18,8 @@ interface CallTurnViewerProps {
   onChangeText: (text: string) => void;
   activeTurnIndex: number | null;
   isPlayingAudio: boolean;
-  recordingSpeaker?: 'Caller' | 'Victim';
-  onRecordingSpeakerChange?: (speaker: 'Caller' | 'Victim') => void;
+  recordingSpeaker?: 'Caller' | 'You';
+  onRecordingSpeakerChange?: (speaker: 'Caller' | 'You') => void;
 }
 
 export const CallTurnViewer: React.FC<CallTurnViewerProps> = ({
@@ -36,6 +34,7 @@ export const CallTurnViewer: React.FC<CallTurnViewerProps> = ({
   const [editingTurnIndex, setEditingTurnIndex] = useState<number | null>(null);
   const [editText, setEditText] = useState<string>('');
   const [newTurnText, setNewTurnText] = useState<string>('');
+  const composerInputRef = useRef<HTMLInputElement>(null);
 
   // Parse text into turns
   const lines = text
@@ -53,7 +52,7 @@ export const CallTurnViewer: React.FC<CallTurnViewerProps> = ({
       speaker = parts[0].trim();
       content = parts.slice(1).join(':').trim();
     } else {
-      speaker = idx % 2 === 0 ? 'Caller' : 'Victim';
+      speaker = idx % 2 === 0 ? 'Caller' : 'You';
     }
 
     // Estimate realistic telephony spoken duration (~2.8 words per second + conversational pause)
@@ -68,31 +67,17 @@ export const CallTurnViewer: React.FC<CallTurnViewerProps> = ({
       return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
     };
 
-    const lower = content.toLowerCase();
-    const threatFlags: string[] = [];
-    if (/otp|pin|verification code/.test(lower)) threatFlags.push('OTP / Credential Request');
-    if (/block|suspend|freeze|kyc/.test(lower)) threatFlags.push('Account Blocking / KYC Threat');
-    if (/arrest|police|crime|warrant|camera/.test(lower)) threatFlags.push('Digital Arrest / Impersonation');
-    if (/transfer|fee|penalty|₹|rs/.test(lower)) threatFlags.push('Money / Fine Demand');
-    if (/urgent|immediately|today|now/.test(lower)) threatFlags.push('Coercive Urgency');
-
     return {
       speaker,
       text: content,
-      is_threat_turn: threatFlags.length > 0,
-      indicators: threatFlags,
       timestamp: formatTime(startSec),
       durationSec: turnDuration
     };
   });
 
-  const handleAddTurn = (speaker: 'Caller' | 'Victim') => {
+  const handleSelectSpeakerToAdd = (speaker: 'Caller' | 'You') => {
     onRecordingSpeakerChange?.(speaker);
-    const defaultPlaceholder = speaker === 'Caller' 
-      ? 'Please confirm the 6-digit verification code immediately to stop the block.'
-      : 'Why is my account blocked? I have not authorized any transfer.';
-    const newText = text.trim() ? `${text.trim()}\n${speaker}: ${defaultPlaceholder}` : `${speaker}: ${defaultPlaceholder}`;
-    onChangeText(newText);
+    composerInputRef.current?.focus();
   };
 
   const handleSaveEdit = (idx: number) => {
@@ -115,8 +100,11 @@ export const CallTurnViewer: React.FC<CallTurnViewerProps> = ({
 
   const handleToggleSpeaker = (idx: number) => {
     const turn = parsedTurns[idx];
-    const isCaller = !turn.speaker.toLowerCase().includes('victim') && !turn.speaker.toLowerCase().includes('receiver') && !turn.speaker.toLowerCase().includes('user');
-    const newSpeaker = isCaller ? 'Victim' : 'Caller';
+    const isCaller = !turn.speaker.toLowerCase().includes('you') && 
+                     !turn.speaker.toLowerCase().includes('victim') && 
+                     !turn.speaker.toLowerCase().includes('receiver') && 
+                     !turn.speaker.toLowerCase().includes('user');
+    const newSpeaker = isCaller ? 'You' : 'Caller';
     const updatedLines = [...lines];
     updatedLines[idx] = `${newSpeaker}: ${turn.text}`;
     onChangeText(updatedLines.join('\n'));
@@ -165,34 +153,34 @@ export const CallTurnViewer: React.FC<CallTurnViewerProps> = ({
           </button>
         </div>
 
-        {/* Quick Helper Actions */}
+        {/* Quick Speaker Selector for typing / mic */}
         <div className="flex items-center space-x-1.5 text-[11px] font-mono">
-          <span className="text-slate-500 mr-1">Insert Turn:</span>
+          <span className="text-slate-500 mr-1">Active Speaker:</span>
           <button
             type="button"
-            onClick={() => handleAddTurn('Caller')}
+            onClick={() => handleSelectSpeakerToAdd('Caller')}
             className={`px-2.5 py-1 rounded border transition-colors flex items-center space-x-1 cursor-pointer ${
               recordingSpeaker === 'Caller'
                 ? 'bg-cyan-950/80 border-cyan-600 text-cyan-300 font-bold'
                 : 'bg-slate-900 border-slate-800 text-cyan-400 hover:text-cyan-300'
             }`}
-            title="Add a Caller turn and set microphone role to Caller"
+            title="Set active speaker to Caller"
           >
-            <Plus className="w-3 h-3" />
-            <span>+ Caller</span>
+            <PhoneCall className="w-3 h-3" />
+            <span>Caller</span>
           </button>
           <button
             type="button"
-            onClick={() => handleAddTurn('Victim')}
+            onClick={() => handleSelectSpeakerToAdd('You')}
             className={`px-2.5 py-1 rounded border transition-colors flex items-center space-x-1 cursor-pointer ${
-              recordingSpeaker === 'Victim'
+              recordingSpeaker === 'You'
                 ? 'bg-emerald-950/80 border-emerald-500 text-emerald-200 font-bold shadow-[0_0_10px_rgba(52,211,153,0.2)]'
                 : 'bg-slate-900 border-emerald-900/50 hover:border-emerald-500/50 text-emerald-400 hover:text-emerald-300'
             }`}
-            title="Add a Victim turn and set microphone role to Victim"
+            title="Set active speaker to You"
           >
-            <Plus className="w-3 h-3" />
-            <span>+ Victim</span>
+            <User className="w-3 h-3" />
+            <span>You</span>
           </button>
         </div>
       </div>
@@ -203,13 +191,18 @@ export const CallTurnViewer: React.FC<CallTurnViewerProps> = ({
           <div className="min-h-52 max-h-84 overflow-y-auto space-y-3 p-3.5 rounded-lg bg-slate-950/70 border border-slate-800/80 font-sans">
             {parsedTurns.length === 0 ? (
               <div className="py-12 text-center text-slate-500 text-xs font-mono space-y-2">
-                <p>No conversation turns loaded.</p>
-                <p className="text-[11px] text-slate-600">Select a scenario above, upload audio, record with microphone, or add a turn below.</p>
+                <p className="text-slate-300 font-semibold">Clean conversation slate.</p>
+                <p className="text-[11px] text-slate-500">
+                  Type a turn below, use the Live Mic, or upload an audio recording.
+                </p>
               </div>
             ) : (
               parsedTurns.map((turn, idx) => {
                 const isTurnActive = isPlayingAudio && activeTurnIndex === idx;
-                const isCaller = !turn.speaker.toLowerCase().includes('victim') && !turn.speaker.toLowerCase().includes('receiver') && !turn.speaker.toLowerCase().includes('user');
+                const isCaller = !turn.speaker.toLowerCase().includes('you') && 
+                                 !turn.speaker.toLowerCase().includes('victim') && 
+                                 !turn.speaker.toLowerCase().includes('receiver') && 
+                                 !turn.speaker.toLowerCase().includes('user');
                 const isEditingThisTurn = editingTurnIndex === idx;
 
                 return (
@@ -222,12 +215,10 @@ export const CallTurnViewer: React.FC<CallTurnViewerProps> = ({
                         isCaller
                           ? isTurnActive
                             ? 'bg-cyan-950/60 border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.35)] ring-1 ring-cyan-400'
-                            : turn.is_threat_turn
-                            ? 'bg-slate-900/80 border-rose-900/60'
-                            : 'bg-slate-900/60 border-slate-800/80'
+                            : 'bg-slate-900/70 border-slate-800'
                           : isTurnActive
                           ? 'bg-emerald-950/60 border-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.35)] ring-1 ring-emerald-400'
-                          : 'bg-slate-900/80 border-emerald-900/50'
+                          : 'bg-slate-900/70 border-slate-800'
                       }`}
                     >
                       <div className="flex items-center justify-between gap-2 mb-2 border-b border-slate-800/60 pb-1.5">
@@ -240,13 +231,13 @@ export const CallTurnViewer: React.FC<CallTurnViewerProps> = ({
                                 ? 'bg-cyan-950 border border-cyan-800 text-cyan-400' 
                                 : 'bg-emerald-950 border border-emerald-800 text-emerald-400'
                             }`}
-                            title="Click to toggle speaker (Caller <-> Victim)"
+                            title="Click to toggle speaker (Caller <-> You)"
                           >
                             {isCaller ? <PhoneCall className="w-3 h-3" /> : <User className="w-3 h-3" />}
                           </button>
                           <div className="flex items-center space-x-1.5">
                             <span className={`text-xs font-bold font-mono ${isCaller ? 'text-cyan-300' : 'text-emerald-300'}`}>
-                              {isCaller ? `${turn.speaker} (Caller)` : `${turn.speaker} (You / Target)`}
+                              {isCaller ? 'Caller' : 'You'}
                             </span>
                             <button
                               type="button"
@@ -272,12 +263,6 @@ export const CallTurnViewer: React.FC<CallTurnViewerProps> = ({
                                 : 'text-emerald-300 bg-emerald-950 border-emerald-700'
                             }`}>
                               <Volume2 className="w-3 h-3 mr-1" /> Speaking
-                            </span>
-                          )}
-                          {turn.is_threat_turn && (
-                            <span className="flex items-center text-[10px] font-mono text-rose-300 font-semibold px-2 py-0.5 rounded bg-rose-950/50 border border-rose-800/60">
-                              <ShieldAlert className="w-3 h-3 mr-1 text-rose-400" />
-                              {turn.indicators?.[0] || 'Coercion Cue'}
                             </span>
                           )}
 
@@ -340,7 +325,7 @@ export const CallTurnViewer: React.FC<CallTurnViewerProps> = ({
                           </div>
                         </div>
                       ) : (
-                        <p className={`text-xs leading-relaxed ${isCaller ? 'text-slate-200' : 'text-emerald-100/90'}`}>
+                        <p className={`text-xs leading-relaxed ${isCaller ? 'text-slate-200' : 'text-slate-200'}`}>
                           "{turn.text}"
                         </p>
                       )}
@@ -355,22 +340,23 @@ export const CallTurnViewer: React.FC<CallTurnViewerProps> = ({
           <form onSubmit={handleAddNewTurnSubmit} className="flex items-center gap-2 p-2 rounded-lg bg-slate-950/70 border border-slate-800/90">
             <button
               type="button"
-              onClick={() => onRecordingSpeakerChange?.(recordingSpeaker === 'Victim' ? 'Caller' : 'Victim')}
+              onClick={() => onRecordingSpeakerChange?.(recordingSpeaker === 'You' ? 'Caller' : 'You')}
               className={`px-3 py-1.5 rounded text-xs font-mono font-bold flex items-center space-x-1.5 cursor-pointer transition-all ${
-                recordingSpeaker === 'Victim'
+                recordingSpeaker === 'You'
                   ? 'bg-emerald-950/90 border border-emerald-600 text-emerald-300 shadow-[0_0_10px_rgba(52,211,153,0.25)]'
                   : 'bg-cyan-950/90 border border-cyan-600 text-cyan-300'
               }`}
               title="Click to toggle active speaker"
             >
-              {recordingSpeaker === 'Victim' ? <User className="w-3.5 h-3.5" /> : <PhoneCall className="w-3.5 h-3.5" />}
-              <span>{recordingSpeaker === 'Victim' ? 'Victim:' : 'Caller:'}</span>
+              {recordingSpeaker === 'You' ? <User className="w-3.5 h-3.5" /> : <PhoneCall className="w-3.5 h-3.5" />}
+              <span>{recordingSpeaker === 'You' ? 'You:' : 'Caller:'}</span>
             </button>
             <input
+              ref={composerInputRef}
               type="text"
               value={newTurnText}
               onChange={(e) => setNewTurnText(e.target.value)}
-              placeholder={`Type what ${recordingSpeaker === 'Victim' ? 'Victim (you)' : 'Caller'} says... (or use Live Mic above)`}
+              placeholder={`Type what ${recordingSpeaker === 'You' ? 'You say' : 'Caller says'}... (or use Live Mic above)`}
               className="flex-1 bg-slate-900/80 border border-slate-800 rounded px-3 py-1.5 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-cyan-500"
             />
             <button
@@ -387,7 +373,7 @@ export const CallTurnViewer: React.FC<CallTurnViewerProps> = ({
         <textarea
           value={text}
           onChange={(e) => onChangeText(e.target.value)}
-          placeholder="Paste conversation transcript here (e.g.,\nCaller: Hello, I am calling from your bank.\nCaller: Your KYC is incomplete and your account will be blocked today.\nVictim: Why will it be blocked?\nCaller: Please share the OTP you received.)"
+          placeholder={`Enter conversation transcript (one turn per line), for example:\nCaller: Hello, are you free for a call?\nYou: Yes, tell me.\nCaller: Let's discuss the project timeline.`}
           className="w-full h-48 bg-slate-950/80 border border-slate-800 rounded-lg p-4 text-xs font-mono text-slate-200 placeholder-slate-600 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 resize-none transition-colors"
           maxLength={5000}
         />
