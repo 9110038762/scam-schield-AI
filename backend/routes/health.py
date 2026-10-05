@@ -55,20 +55,21 @@ def get_dataset_info():
 @router.post("/transcribe", status_code=status.HTTP_200_OK)
 async def transcribe_audio(
     file: Optional[UploadFile] = File(None),
-    demo: Optional[bool] = Form(False)
+    demo: Optional[bool] = Form(False),
+    sample_id: Optional[str] = Form(None)
 ):
     """
-    Accepts audio file (WAV / MP3) or demo flag.
+    Accepts audio file (WAV / MP3) or demo flag/sample_id.
     Returns speech-to-text transcript ready for /predict.
     """
     if file:
         content = await file.read()
         filename = file.filename or "uploaded.wav"
-        return asr_service.transcribe_audio(content, filename)
-    elif demo:
-        return asr_service.transcribe_audio(b"demo", "scam_voice_call_rec.wav")
+        return asr_service.transcribe_audio(content, filename=filename, sample_id=sample_id)
+    elif demo or sample_id:
+        return asr_service.transcribe_audio(b"demo", filename="scam_voice_call_rec.wav", sample_id=sample_id)
     else:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Either an audio file must be uploaded or demo=true must be passed."
+            detail="Either an audio file must be uploaded or demo=true/sample_id must be passed."
         )

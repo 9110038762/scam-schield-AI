@@ -142,3 +142,21 @@ def test_call_transcript_multi_speaker():
     assert data["prediction"] == "SCAM"
     assert data["risk_score"] >= 75
     assert len(data["indicators"]) >= 2
+    assert "call_analysis" in data
+    assert data["call_analysis"]["total_turns"] >= 3
+    assert data["call_analysis"]["suspicious_turns_count"] >= 1
+
+def test_transcribe_demo_endpoint():
+    response = client.post("/transcribe", data={"demo": "true"})
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "success"
+    assert "Caller:" in data["transcript"]
+    assert "asr_engine" in data
+
+def test_transcribe_preset_sample_id():
+    response = client.post("/transcribe", data={"sample_id": "call-1"})
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "success"
+    assert "digital arrest" in data["transcript"].lower()

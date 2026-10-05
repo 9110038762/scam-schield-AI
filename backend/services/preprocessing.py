@@ -32,6 +32,8 @@ def clean_text(text: str) -> str:
     text = re.sub(r"\b\d{4}\s\d{4}\s\d{4}\b", "[AADHAAR_NUMBER]", text)
     # Mask raw numeric OTPs following trigger words
     text = re.sub(r"(?i)\b(otp|code|pin)\s*(?:is|:)?\s*(\d{4,6})\b", r"\1 [OTP_CODE]", text)
+    # Strip conversational speaker prefixes (e.g., "Caller:", "Receiver:", "Victim:") to prevent bias
+    text = re.sub(r"(?i)(?:^|\n)\s*(?:caller|receiver|speaker|victim|agent|user|customer)\s*:\s*", " ", text)
     # Normalize whitespaces
     text = re.sub(r"\s+", " ", text).strip()
     return text

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Play, RotateCcw, ChevronDown, ChevronUp, Cpu, RefreshCw, MessageSquare, PhoneCall, Radio } from 'lucide-react';
+import { Play, RotateCcw, ChevronDown, ChevronUp, Cpu, RefreshCw, MessageSquare, PhoneCall } from 'lucide-react';
 import { SAMPLE_SCAMS, SAMPLE_CALL_TRANSCRIPTS } from '../data/mockData';
 import { analyzeMessage, checkBackendHealth } from '../services/scamDetection';
 import type { AnalysisResult, InputType } from '../types';
@@ -7,6 +7,9 @@ import { PredictionCard } from './PredictionCard';
 import { RiskGauge } from './RiskGauge';
 import { IndicatorCard } from './IndicatorCard';
 import { RecommendationCard } from './RecommendationCard';
+import { CallAudioBar } from './CallAudioBar';
+import { CallTurnViewer } from './CallTurnViewer';
+import { CallAnalysisCard } from './CallAnalysisCard';
 
 interface MessageAnalyzerProps {
   onAnalysisSuccess?: (text: string, result: AnalysisResult, type: InputType) => void;
@@ -27,9 +30,23 @@ export const MessageAnalyzer: React.FC<MessageAnalyzerProps> = ({
   const [selectedModel, setSelectedModel] = useState<string>('best');
   const [backendOnline, setBackendOnline] = useState<boolean | null>(null);
 
+  // Audio Playback & Turn State for Call Transcript Mode
+  const [activeTurnIndex, setActiveTurnIndex] = useState<number | null>(null);
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [activeSampleId, setActiveSampleId] = useState<string | undefined>(undefined);
+
   useEffect(() => {
     checkBackendHealth().then(res => setBackendOnline(res.online));
   }, []);
+
+  // Cleanup audio on mode switch or unmount
+  useEffect(() => {
+    return () => {
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, [mode]);
 
   const handleAnalyze = async () => {
     if (!text.trim()) return;
@@ -50,13 +67,70 @@ export const MessageAnalyzer: React.FC<MessageAnalyzerProps> = ({
   };
 
   const handleClear = () => {
+    if (window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+    setIsPlayingAudio(false);
+    setActiveTurnIndex(null);
+    setActiveSampleId(undefined);
     setText('');
     setResult(null);
   };
 
-  const loadSample = (sampleText: string) => {
+  const loadSample = (sampleText: string, sampleId?: string) => {
+    if (window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+    setIsPlayingAudio(false);
+    setActiveTurnIndex(null);
+    setActiveSampleId(sampleId);
     setText(sampleText);
     setResult(null);
+  };
+
+  const handleReplayAudio = () => {
+    if (!text.trim()) return;
+    if (isPlayingAudio) {
+      if (window.speechSynthesis) window.speechSynthesis.cancel();
+      setIsPlayingAudio(false);
+      setActiveTurnIndex(null);
+      return;
+    }
+
+    if (!window.speechSynthesis) {
+      alert('Speech synthesis audio is not supported in this browser.');
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    if (lines.length === 0) return;
+
+    setIsPlayingAudio(true);
+
+    const speakTurn = (index: number) => {
+      if (index >= lines.length) {
+        setIsPlayingAudio(false);
+        setActiveTurnIndex(null);
+        return;
+      }
+      setActiveTurnIndex(index);
+      const rawLine = lines[index];
+      const content = rawLine.includes(':') ? rawLine.split(':').slice(1).join(':').trim() : rawLine;
+      const utterance = new SpeechSynthesisUtterance(content);
+      utterance.rate = 1.02;
+      utterance.lang = 'en-IN';
+      utterance.onend = () => {
+        setTimeout(() => speakTurn(index + 1), 500);
+      };
+      utterance.onerror = () => {
+        setIsPlayingAudio(false);
+        setActiveTurnIndex(null);
+      };
+      window.speechSynthesis.speak(utterance);
+    };
+
+    speakTurn(0);
   };
 
   const steps = [
@@ -76,8 +150,14 @@ export const MessageAnalyzer: React.FC<MessageAnalyzerProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-900/40 p-4 rounded-xl border border-slate-800/80">
         <div className="flex items-center space-x-2">
           <button
-            onClick={() => { setMode('message'); setText(''); setResult(null); }}
-            className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+            onClick={() => { 
+              if (window.speechSynthesis) window.speechSynthesis.cancel();
+              setIsPlayingAudio(false);
+              setMode('message'); 
+              setText(''); 
+              setResult(null); 
+            }}
+            className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               mode === 'message'
                 ? 'bg-cyan-600 text-slate-950 font-bold shadow'
                 : 'bg-slate-950/60 text-slate-400 hover:text-slate-200 border border-slate-800'
@@ -88,8 +168,15 @@ export const MessageAnalyzer: React.FC<MessageAnalyzerProps> = ({
           </button>
 
           <button
-            onClick={() => { setMode('call_transcript'); setText(''); setResult(null); }}
-            className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+            onClick={() => { 
+              if (window.speechSynthesis) window.speechSynthesis.cancel();
+              setIsPlayingAudio(false);
+              setMode('call_transcript'); 
+              setText(SAMPLE_CALL_TRANSCRIPTS[0].text); 
+              setActiveSampleId(SAMPLE_CALL_TRANSCRIPTS[0].id);
+              setResult(null); 
+            }}
+            className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               mode === 'call_transcript'
                 ? 'bg-cyan-600 text-slate-950 font-bold shadow'
                 : 'bg-slate-950/60 text-slate-400 hover:text-slate-200 border border-slate-800'
@@ -135,52 +222,76 @@ export const MessageAnalyzer: React.FC<MessageAnalyzerProps> = ({
       </div>
 
       {/* Input Form Card */}
-      <div className="glass-panel rounded-xl p-6 border border-slate-800/80">
-        <div className="flex justify-between items-center mb-2">
-          <label className="text-xs font-mono font-bold tracking-wider text-slate-400 uppercase block">
-            {mode === 'call_transcript' ? 'Phone Call Transcript (Simulated Conversation)' : 'Communication Message Text'}
-          </label>
-          {mode === 'call_transcript' && (
-            <span className="text-[11px] text-cyan-400 font-mono flex items-center space-x-1">
-              <Radio className="w-3 h-3 animate-pulse" />
-              <span>Multi-turn Conversation Analysis</span>
-            </span>
-          )}
-        </div>
-        
-        <textarea
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder={
-            mode === 'call_transcript'
-              ? "Paste conversation transcript here (e.g.,\nCaller: Hello, I am calling from your bank.\nCaller: Your KYC is incomplete and your account will be blocked today.\nCaller: Please share the OTP you received.)"
-              : "Paste a suspicious SMS, email, chat message, or notification here..."
-          }
-          className="w-full h-40 bg-slate-950/80 border border-slate-800 rounded-lg p-4 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 font-sans resize-none transition-colors"
-          maxLength={3000}
-        />
-        
-        {/* Sample Loading Buttons */}
-        <div className="flex flex-wrap justify-between items-center mt-3 gap-2">
-          <span className="text-[11px] font-mono text-slate-500">
-            {text.length} / 3000 characters
-          </span>
-          <div className="flex flex-wrap gap-1.5">
-            <span className="text-[10px] font-mono text-slate-500 py-1 mr-1">Load Samples:</span>
-            {(mode === 'call_transcript' ? SAMPLE_CALL_TRANSCRIPTS : SAMPLE_SCAMS).map((sample) => (
-              <button
-                key={sample.id}
-                onClick={() => loadSample(sample.text)}
-                className="text-[10px] font-semibold text-cyan-400/90 bg-cyan-950/20 border border-cyan-900/40 hover:bg-cyan-950/40 hover:text-cyan-300 px-2.5 py-1 rounded transition-colors"
-              >
-                {sample.label}
-              </button>
-            ))}
-          </div>
-        </div>
+      <div className="glass-panel rounded-xl p-6 border border-slate-800/80 space-y-4">
+        {mode === 'call_transcript' ? (
+          <>
+            {/* Phone Audio & ASR Interface Bar */}
+            <CallAudioBar
+              transcript={text}
+              onTranscriptChange={(newText) => {
+                setText(newText);
+                setResult(null);
+              }}
+              onSampleSelect={(sample) => loadSample(sample.text, sample.id)}
+              activeSampleId={activeSampleId}
+              activeTurnIndex={activeTurnIndex}
+              onActiveTurnChange={setActiveTurnIndex}
+              isPlaying={isPlayingAudio}
+              setIsPlaying={setIsPlayingAudio}
+            />
+
+            {/* Conversation Viewer & Editor */}
+            <div className="pt-2">
+              <CallTurnViewer
+                text={text}
+                onChangeText={(newText) => {
+                  setText(newText);
+                  setResult(null);
+                }}
+                activeTurnIndex={activeTurnIndex}
+                isPlayingAudio={isPlayingAudio}
+              />
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="flex justify-between items-center mb-2">
+              <label className="text-xs font-mono font-bold tracking-wider text-slate-400 uppercase block">
+                Communication Message Text
+              </label>
+            </div>
+            
+            <textarea
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder="Paste a suspicious SMS, email, chat message, or notification here..."
+              className="w-full h-40 bg-slate-950/80 border border-slate-800 rounded-lg p-4 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 font-sans resize-none transition-colors"
+              maxLength={3000}
+            />
+            
+            {/* Sample Loading Buttons for Single Message */}
+            <div className="flex flex-wrap justify-between items-center mt-3 gap-2">
+              <span className="text-[11px] font-mono text-slate-500">
+                {text.length} / 3000 characters
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                <span className="text-[10px] font-mono text-slate-500 py-1 mr-1">Load Samples:</span>
+                {SAMPLE_SCAMS.map((sample) => (
+                  <button
+                    key={sample.id}
+                    onClick={() => loadSample(sample.text, sample.id)}
+                    className="text-[10px] font-semibold text-cyan-400/90 bg-cyan-950/20 border border-cyan-900/40 hover:bg-cyan-950/40 hover:text-cyan-300 px-2.5 py-1 rounded transition-colors cursor-pointer"
+                  >
+                    {sample.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
 
         {/* Action Buttons */}
-        <div className="flex space-x-3 mt-5 pt-4 border-t border-slate-900">
+        <div className="flex space-x-3 pt-4 border-t border-slate-900">
           <button
             onClick={handleAnalyze}
             disabled={loading || !text.trim()}
@@ -201,7 +312,7 @@ export const MessageAnalyzer: React.FC<MessageAnalyzerProps> = ({
           
           <button
             onClick={handleClear}
-            className="flex items-center justify-center space-x-2 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-slate-300 px-4 py-2.5 rounded-lg text-sm transition-colors"
+            className="flex items-center justify-center space-x-2 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-slate-300 px-4 py-2.5 rounded-lg text-sm transition-colors cursor-pointer"
           >
             <RotateCcw className="w-4 h-4" />
             <span>Clear</span>
@@ -261,6 +372,15 @@ export const MessageAnalyzer: React.FC<MessageAnalyzerProps> = ({
               />
             </div>
           </div>
+
+          {/* Call Transcript Coercion Flow & Analysis Card */}
+          {result.callAnalysis && (
+            <CallAnalysisCard 
+              result={result} 
+              onReplayAudio={handleReplayAudio}
+              isPlayingAudio={isPlayingAudio}
+            />
+          )}
 
           {/* Indicator Card & Explanation Reasons */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

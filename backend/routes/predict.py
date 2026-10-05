@@ -5,7 +5,7 @@ Handles /predict endpoint for message & call transcript classification.
 
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
-from typing import List, Optional, Any
+from typing import List, Optional, Any, Dict
 from backend.services.ml_service import ml_service
 
 router = APIRouter(tags=["Prediction"])
@@ -35,6 +35,8 @@ class PredictResponse(BaseModel):
     model_probability: float
     latency_ms: float
     cleaned_text: str
+    input_type: Optional[str] = "SMS"
+    call_analysis: Optional[Dict[str, Any]] = None
 
 @router.post("/predict", response_model=PredictResponse, status_code=status.HTTP_200_OK)
 def predict_message(payload: PredictRequest):
@@ -52,7 +54,11 @@ def predict_message(payload: PredictRequest):
         )
 
     try:
-        result = ml_service.predict(raw_text, model_preference=payload.model_preference or "best")
+        result = ml_service.predict(
+            raw_text,
+            model_preference=payload.model_preference or "best",
+            input_type=payload.input_type or "SMS"
+        )
         return result
     except RuntimeError as e:
         raise HTTPException(

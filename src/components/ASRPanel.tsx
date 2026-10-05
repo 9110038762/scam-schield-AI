@@ -25,7 +25,7 @@ export const ASRPanel: React.FC<ASRPanelProps> = ({ onAnalysisSuccess }) => {
     if (files && files.length > 0) {
       const file = files[0];
       setAudioFile(file);
-      simulateASR();
+      simulateASR(file);
     }
   };
 

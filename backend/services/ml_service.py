@@ -74,7 +74,47 @@ class MLService:
             "svm": self.svm_model is not None
         }
 
-    def predict(self, raw_text: str, model_preference: str = "best") -> Dict[str, Any]:
+    def _parse_call_turns(self, text: str) -> Dict[str, Any]:
+        """Parses multi-turn call transcripts into speaker turns and evaluates threat progression."""
+        lines = [line.strip() for line in text.split("\n") if line.strip()]
+        turns = []
+        threat_count = 0
+        progression_steps = []
+
+        for idx, line in enumerate(lines, start=1):
+            if ":" in line:
+                parts = line.split(":", 1)
+                speaker = parts[0].strip()
+                content = parts[1].strip()
+            else:
+                speaker = "Caller" if idx % 2 != 0 else "Receiver"
+                content = line
+
+            turn_indicators, _ = detect_indicators(content)
+            is_threat = len(turn_indicators) > 0
+            if is_threat:
+                threat_count += 1
+                ind_names = [ind["name"] for ind in turn_indicators]
+                progression_steps.append(f"Turn {idx} ({speaker}): {', '.join(ind_names[:2])}")
+
+            turns.append({
+                "speaker": speaker,
+                "text": content,
+                "is_threat_turn": is_threat,
+                "indicators": [ind["name"] for ind in turn_indicators]
+            })
+
+        progression_summary = " → ".join(progression_steps) if progression_steps else "No active coercive turns detected."
+
+        return {
+            "turns": turns,
+            "total_turns": len(turns),
+            "suspicious_turns_count": threat_count,
+            "coercion_progression": progression_summary,
+            "detected_modality": "Multi-turn Telephony Audio Transcript"
+        }
+
+    def predict(self, raw_text: str, model_preference: str = "best", input_type: str = "SMS") -> Dict[str, Any]:
         if not self.is_ready():
             raise RuntimeError("ScamShield ML models are not initialized.")
 
@@ -98,7 +138,7 @@ class MLService:
                 inputs = self.distilbert_tokenizer(
                     cleaned,
                     truncation=True,
-                    max_length=128,
+                    max_length=512,
                     return_tensors="pt"
                 ).to(self.device)
                 outputs = self.distilbert_model(**inputs)
@@ -129,6 +169,10 @@ class MLService:
         # Indicator analysis
         indicators, indicator_score = detect_indicators(raw_text)
 
+        # Call transcript turn analysis if telephony or multi-turn lines
+        is_call_transcript = (input_type == "Call Transcript") or ("Caller:" in raw_text) or ("\n" in raw_text.strip() and len(raw_text.strip().split("\n")) >= 2)
+        call_analysis = self._parse_call_turns(raw_text) if is_call_transcript else None
+
         # Category classification
         cat_info = classify_category(raw_text, prediction, indicators)
 
@@ -137,9 +181,12 @@ class MLService:
 
         # Explainable AI reasoning
         reasons = generate_explanation(prediction, indicators, cat_info["category"])
+        if is_call_transcript and call_analysis and call_analysis["suspicious_turns_count"] > 0:
+            reasons.insert(0, f"Telephony Coercion Flow: {call_analysis['suspicious_turns_count']} of {call_analysis['total_turns']} speaker turns contain high-risk social engineering markers.")
+
         recommendation = generate_recommendation(prediction, risk_level)
 
-        return {
+        response_data: Dict[str, Any] = {
             "prediction": prediction,
             "confidence": confidence,
             "risk_score": risk_score,
@@ -154,8 +201,14 @@ class MLService:
             "model_used": model_used,
             "model_probability": round(scam_prob, 4),
             "latency_ms": latency_ms,
-            "cleaned_text": cleaned
+            "cleaned_text": cleaned,
+            "input_type": input_type
         }
+
+        if call_analysis:
+            response_data["call_analysis"] = call_analysis
+
+        return response_data
 
 # Global singleton
 ml_service = MLService()

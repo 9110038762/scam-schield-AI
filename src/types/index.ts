@@ -7,6 +7,30 @@ export interface Indicator {
   description: string;
 }
 
+export interface CallTurn {
+  speaker: string;
+  text: string;
+  is_threat_turn?: boolean;
+  indicators?: string[];
+}
+
+export interface CallAnalysis {
+  turns: CallTurn[];
+  total_turns: number;
+  suspicious_turns_count: number;
+  coercion_progression?: string;
+  detected_modality?: string;
+}
+
+export interface AudioInfo {
+  filename?: string;
+  duration_seconds?: number;
+  asr_engine?: string;
+  sample_rate_hz?: number;
+  sample_id?: string;
+  is_simulated?: boolean;
+}
+
 export interface AnalysisResult {
   prediction: PredictionType;
   confidence: number; // percentage (0-100)
@@ -21,6 +45,9 @@ export interface AnalysisResult {
   modelUsed?: string;
   latencyMs?: number;
   isOfflineFallback?: boolean;
+  inputType?: InputType;
+  callAnalysis?: CallAnalysis;
+  audioInfo?: AudioInfo;
 }
 
 export interface HistoryRecord {
