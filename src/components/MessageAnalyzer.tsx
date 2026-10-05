@@ -34,6 +34,7 @@ export const MessageAnalyzer: React.FC<MessageAnalyzerProps> = ({
   const [activeTurnIndex, setActiveTurnIndex] = useState<number | null>(null);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [activeSampleId, setActiveSampleId] = useState<string | undefined>(undefined);
+  const [recordingSpeaker, setRecordingSpeaker] = useState<'Caller' | 'Victim'>('Caller');
 
   useEffect(() => {
     checkBackendHealth().then(res => setBackendOnline(res.online));
@@ -73,6 +74,7 @@ export const MessageAnalyzer: React.FC<MessageAnalyzerProps> = ({
     setIsPlayingAudio(false);
     setActiveTurnIndex(null);
     setActiveSampleId(undefined);
+    setRecordingSpeaker('Caller');
     setText('');
     setResult(null);
   };
@@ -266,6 +268,8 @@ export const MessageAnalyzer: React.FC<MessageAnalyzerProps> = ({
               onActiveTurnChange={setActiveTurnIndex}
               isPlaying={isPlayingAudio}
               setIsPlaying={setIsPlayingAudio}
+              recordingSpeaker={recordingSpeaker}
+              onRecordingSpeakerChange={setRecordingSpeaker}
             />
 
             {/* Conversation Viewer & Editor */}
@@ -278,6 +282,8 @@ export const MessageAnalyzer: React.FC<MessageAnalyzerProps> = ({
                 }}
                 activeTurnIndex={activeTurnIndex}
                 isPlayingAudio={isPlayingAudio}
+                recordingSpeaker={recordingSpeaker}
+                onRecordingSpeakerChange={setRecordingSpeaker}
               />
             </div>
           </>

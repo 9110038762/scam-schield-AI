@@ -7,6 +7,7 @@ import {
   Volume2, 
   AudioLines, 
   PhoneCall, 
+  User,
   Radio, 
   CheckCircle2, 
   RefreshCw
@@ -23,6 +24,8 @@ interface CallAudioBarProps {
   onActiveTurnChange: (index: number | null) => void;
   isPlaying: boolean;
   setIsPlaying: (playing: boolean) => void;
+  recordingSpeaker?: 'Caller' | 'Victim';
+  onRecordingSpeakerChange?: (speaker: 'Caller' | 'Victim') => void;
 }
 
 export const CallAudioBar: React.FC<CallAudioBarProps> = ({
@@ -33,6 +36,8 @@ export const CallAudioBar: React.FC<CallAudioBarProps> = ({
   onActiveTurnChange,
   isPlaying,
   setIsPlaying,
+  recordingSpeaker = 'Caller',
+  onRecordingSpeakerChange,
 }) => {
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
@@ -40,12 +45,19 @@ export const CallAudioBar: React.FC<CallAudioBarProps> = ({
   const [audioDuration, setAudioDuration] = useState<number | null>(null);
   const [asrStatusNote, setAsrStatusNote] = useState<string | null>(null);
 
+  const speakerRef = useRef<'Caller' | 'Victim'>(recordingSpeaker);
+  const baseTranscriptRef = useRef<string>('');
+  const sessionTextRef = useRef<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<any>(null);
   const timerIntervalRef = useRef<any>(null);
   const synthUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const turnQueueRef = useRef<string[]>([]);
   const currentTurnIdxRef = useRef<number>(0);
+
+  useEffect(() => {
+    speakerRef.current = recordingSpeaker;
+  }, [recordingSpeaker]);
 
   // Clean up speech synthesis & recording on unmount
   useEffect(() => {
@@ -102,7 +114,18 @@ export const CallAudioBar: React.FC<CallAudioBarProps> = ({
       }
       setIsRecording(false);
       setRecordingSeconds(0);
-      setAsrStatusNote('Microphone recording completed and transcribed.');
+      const speaker = speakerRef.current;
+      if (sessionTextRef.current.trim()) {
+        const clean = sessionTextRef.current.trim();
+        const finalTurn = `${speaker}: ${clean}`;
+        const updated = baseTranscriptRef.current
+          ? `${baseTranscriptRef.current}\n${finalTurn}`
+          : finalTurn;
+        onTranscriptChange(updated);
+        setAsrStatusNote(`Recorded turn as ${speaker}. Turn added to conversation.`);
+      } else {
+        setAsrStatusNote('Microphone recording stopped.');
+      }
       return;
     }
 
@@ -119,12 +142,13 @@ export const CallAudioBar: React.FC<CallAudioBarProps> = ({
       recognition.interimResults = true;
       recognition.lang = 'en-IN'; // Optimized for Indian English / Hinglish telecommunications
 
-      let sessionText = '';
+      baseTranscriptRef.current = transcript.trim();
+      sessionTextRef.current = '';
 
       recognition.onstart = () => {
         setIsRecording(true);
         setRecordingSeconds(0);
-        setAsrStatusNote('Listening to phone audio via microphone...');
+        setAsrStatusNote(`Listening to ${speakerRef.current} via microphone...`);
         timerIntervalRef.current = setInterval(() => {
           setRecordingSeconds(prev => prev + 1);
         }, 1000);
@@ -140,17 +164,24 @@ export const CallAudioBar: React.FC<CallAudioBarProps> = ({
             currentInterim += event.results[i][0].transcript;
           }
         }
+        const speaker = speakerRef.current;
         if (currentFinal) {
-          sessionText += currentFinal;
-          const formatted = sessionText.trim()
-            .split('.')
-            .map(s => s.trim())
-            .filter(s => s.length > 0)
-            .map(s => `Caller: ${s}.`)
-            .join('\n');
-          onTranscriptChange(formatted);
-        } else if (currentInterim && !sessionText) {
-          onTranscriptChange(`Caller: ${currentInterim}...`);
+          sessionTextRef.current += currentFinal;
+          const clean = sessionTextRef.current.trim();
+          const newTurn = `${speaker}: ${clean}`;
+          const updated = baseTranscriptRef.current
+            ? `${baseTranscriptRef.current}\n${newTurn}`
+            : newTurn;
+          onTranscriptChange(updated);
+        } else if (currentInterim) {
+          const combined = sessionTextRef.current.trim()
+            ? `${sessionTextRef.current.trim()} ${currentInterim}`
+            : currentInterim;
+          const interimTurn = `${speaker}: ${combined}...`;
+          const updated = baseTranscriptRef.current
+            ? `${baseTranscriptRef.current}\n${interimTurn}`
+            : interimTurn;
+          onTranscriptChange(updated);
         }
       };
 
@@ -166,6 +197,16 @@ export const CallAudioBar: React.FC<CallAudioBarProps> = ({
       recognition.onend = () => {
         setIsRecording(false);
         if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+        const speaker = speakerRef.current;
+        if (sessionTextRef.current.trim()) {
+          const clean = sessionTextRef.current.trim();
+          const finalTurn = `${speaker}: ${clean}`;
+          const updated = baseTranscriptRef.current
+            ? `${baseTranscriptRef.current}\n${finalTurn}`
+            : finalTurn;
+          onTranscriptChange(updated);
+          setAsrStatusNote(`Recorded ${speaker} turn successfully. Click "+ Victim" or switch speaker to record reply.`);
+        }
       };
 
       recognitionRef.current = recognition;
@@ -327,6 +368,53 @@ export const CallAudioBar: React.FC<CallAudioBarProps> = ({
         )}
       </div>
 
+      {/* Active Speaker Role Selector */}
+      <div className="flex flex-wrap items-center justify-between gap-2.5 px-3 py-2 rounded-lg bg-slate-950/70 border border-slate-800/90">
+        <div className="flex items-center space-x-2.5">
+          <span className="text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider flex items-center space-x-1">
+            <span>Microphone Role:</span>
+          </span>
+          <div className="flex items-center space-x-1.5">
+            <button
+              type="button"
+              onClick={() => onRecordingSpeakerChange?.('Caller')}
+              className={`flex items-center space-x-1.5 px-3 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                recordingSpeaker === 'Caller'
+                  ? 'bg-cyan-600 text-slate-950 font-bold shadow-[0_0_12px_rgba(6,182,212,0.4)]'
+                  : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
+              }`}
+            >
+              <PhoneCall className="w-3.5 h-3.5" />
+              <span>Caller (Suspect)</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onRecordingSpeakerChange?.('Victim')}
+              className={`flex items-center space-x-1.5 px-3 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                recordingSpeaker === 'Victim'
+                  ? 'bg-emerald-600 text-slate-950 font-bold shadow-[0_0_12px_rgba(52,211,153,0.4)]'
+                  : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
+              }`}
+            >
+              <User className="w-3.5 h-3.5" />
+              <span>Victim (You / Receiver)</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="flex items-center space-x-2 text-[11px] font-mono">
+          <span className="text-slate-500">Live Mic tags as:</span>
+          <span className={`px-2 py-0.5 rounded font-bold border ${
+            recordingSpeaker === 'Victim'
+              ? 'bg-emerald-950/70 border-emerald-700/60 text-emerald-300'
+              : 'bg-cyan-950/70 border-cyan-700/60 text-cyan-300'
+          }`}>
+            {recordingSpeaker === 'Victim' ? '👤 Victim:' : '📞 Caller:'}
+          </span>
+        </div>
+      </div>
+
       {/* Main 3 Audio Actions */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {/* Action 1: Upload Phone Audio */}
@@ -363,19 +451,23 @@ export const CallAudioBar: React.FC<CallAudioBarProps> = ({
           disabled={isTranscribing || isPlaying}
           className={`flex items-center justify-center space-x-2 p-3 rounded-lg border transition-all text-xs font-semibold cursor-pointer disabled:opacity-50 ${
             isRecording
-              ? 'bg-rose-950/80 border-rose-600 text-rose-300 animate-pulse'
+              ? recordingSpeaker === 'Victim'
+                ? 'bg-emerald-950/90 border-emerald-500 text-emerald-200 shadow-[0_0_15px_rgba(52,211,153,0.3)] animate-pulse'
+                : 'bg-rose-950/90 border-rose-600 text-rose-200 shadow-[0_0_15px_rgba(244,63,94,0.3)] animate-pulse'
+              : recordingSpeaker === 'Victim'
+              ? 'bg-emerald-950/30 hover:bg-emerald-950/60 border-emerald-800/60 hover:border-emerald-500 text-emerald-300'
               : 'bg-slate-950/70 hover:bg-slate-900 border-slate-800 hover:border-cyan-500/50 text-slate-200'
           }`}
         >
           {isRecording ? (
             <>
-              <MicOff className="w-4 h-4 text-rose-400 animate-spin" />
-              <span>Stop Recording ({formatTimer(recordingSeconds)})</span>
+              <MicOff className={`w-4 h-4 ${recordingSpeaker === 'Victim' ? 'text-emerald-400' : 'text-rose-400'} animate-spin`} />
+              <span>Stop Recording {recordingSpeaker} ({formatTimer(recordingSeconds)})</span>
             </>
           ) : (
             <>
-              <Mic className="w-4 h-4 text-rose-400" />
-              <span>Live Mic Speech-to-Text</span>
+              <Mic className={`w-4 h-4 ${recordingSpeaker === 'Victim' ? 'text-emerald-400' : 'text-cyan-400'}`} />
+              <span>Record Audio as {recordingSpeaker === 'Victim' ? 'Victim' : 'Caller'}</span>
             </>
           )}
         </button>
