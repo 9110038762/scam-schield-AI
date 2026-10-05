@@ -232,24 +232,40 @@ export const CallAudioBar: React.FC<CallAudioBarProps> = ({
         content = parts.slice(1).join(':').trim();
       }
 
+      const isVictim = speaker.toLowerCase().includes('victim') || speaker.toLowerCase().includes('receiver') || speaker.toLowerCase().includes('user');
+
       const utterance = new SpeechSynthesisUtterance(content);
-      // Telephone acoustic pitch & rate simulation
-      utterance.rate = 1.02; // Realistic brisk phone pace
-      utterance.pitch = speaker.toLowerCase().includes('police') || speaker.toLowerCase().includes('inspector') ? 0.88 : 1.05;
       utterance.lang = 'en-IN';
 
-      // Pick Indian voice if available
+      // Distinct telephone acoustic profiles for Caller vs Victim
+      if (isVictim) {
+        // Victim Persona: Higher pitch, slightly hesitant answering pace
+        utterance.rate = 0.98;
+        utterance.pitch = 1.22;
+      } else {
+        // Caller Persona: Authoritative, assertive phone pace
+        utterance.rate = 1.05;
+        utterance.pitch = speaker.toLowerCase().includes('police') || speaker.toLowerCase().includes('inspector') ? 0.86 : 1.0;
+      }
+
+      // Pick distinctive voices if browser offers multiple
       const voices = window.speechSynthesis.getVoices();
-      const inVoice = voices.find(v => v.lang.includes('en-IN') || v.lang.includes('hi-IN'));
-      if (inVoice) {
-        utterance.voice = inVoice;
+      if (voices.length > 1) {
+        if (isVictim) {
+          const victimVoice = voices.find(v => (v.name.includes('Female') || v.name.includes('Zira') || v.name.includes('Samantha') || v.name.includes('Google') || v.name.includes('Sangeeta')) && (v.lang.includes('IN') || v.lang.includes('en')));
+          if (victimVoice) utterance.voice = victimVoice;
+        } else {
+          const callerVoice = voices.find(v => (v.name.includes('Male') || v.name.includes('David') || v.name.includes('Rishi') || v.name.includes('George')) && (v.lang.includes('IN') || v.lang.includes('en')));
+          if (callerVoice) utterance.voice = callerVoice;
+        }
       }
 
       utterance.onend = () => {
-        // Natural telephone conversational pause between turns
+        // Natural telephone conversational pause between turns (longer before victim responds)
+        const pauseMs = isVictim ? 500 : 700;
         setTimeout(() => {
           speakTurn(index + 1);
-        }, 550);
+        }, pauseMs);
       };
 
       utterance.onerror = () => {

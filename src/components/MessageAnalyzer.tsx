@@ -116,12 +116,40 @@ export const MessageAnalyzer: React.FC<MessageAnalyzerProps> = ({
       }
       setActiveTurnIndex(index);
       const rawLine = lines[index];
-      const content = rawLine.includes(':') ? rawLine.split(':').slice(1).join(':').trim() : rawLine;
+      let speaker = 'Caller';
+      let content = rawLine;
+      if (rawLine.includes(':')) {
+        const parts = rawLine.split(':');
+        speaker = parts[0].trim();
+        content = parts.slice(1).join(':').trim();
+      }
+
+      const isVictim = speaker.toLowerCase().includes('victim') || speaker.toLowerCase().includes('receiver') || speaker.toLowerCase().includes('user');
       const utterance = new SpeechSynthesisUtterance(content);
-      utterance.rate = 1.02;
       utterance.lang = 'en-IN';
+
+      if (isVictim) {
+        utterance.rate = 0.98;
+        utterance.pitch = 1.22;
+      } else {
+        utterance.rate = 1.05;
+        utterance.pitch = speaker.toLowerCase().includes('police') || speaker.toLowerCase().includes('inspector') ? 0.86 : 1.0;
+      }
+
+      const voices = window.speechSynthesis.getVoices();
+      if (voices.length > 1) {
+        if (isVictim) {
+          const victimVoice = voices.find(v => (v.name.includes('Female') || v.name.includes('Zira') || v.name.includes('Samantha') || v.name.includes('Google') || v.name.includes('Sangeeta')) && (v.lang.includes('IN') || v.lang.includes('en')));
+          if (victimVoice) utterance.voice = victimVoice;
+        } else {
+          const callerVoice = voices.find(v => (v.name.includes('Male') || v.name.includes('David') || v.name.includes('Rishi') || v.name.includes('George')) && (v.lang.includes('IN') || v.lang.includes('en')));
+          if (callerVoice) utterance.voice = callerVoice;
+        }
+      }
+
       utterance.onend = () => {
-        setTimeout(() => speakTurn(index + 1), 500);
+        const pauseMs = isVictim ? 500 : 700;
+        setTimeout(() => speakTurn(index + 1), pauseMs);
       };
       utterance.onerror = () => {
         setIsPlayingAudio(false);
