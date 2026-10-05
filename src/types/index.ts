@@ -19,8 +19,6 @@ export interface CallAnalysis {
   total_turns: number;
   suspicious_turns_count: number;
   coercion_progression?: string;
-  first_threat_turn?: number | null;
-  initial_posture?: string;
   detected_modality?: string;
 }
 

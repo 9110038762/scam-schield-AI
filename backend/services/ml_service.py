@@ -75,15 +75,11 @@ class MLService:
         }
 
     def _parse_call_turns(self, text: str) -> Dict[str, Any]:
-        """Parses multi-turn call transcripts into speaker turns and evaluates threat progression.
-        Evaluates the conversation starting with a neutral/friendly trust baseline, then judges
-        progressive turns as the dialogue unfolds.
-        """
+        """Parses multi-turn call transcripts into speaker turns and evaluates threat progression."""
         lines = [line.strip() for line in text.split("\n") if line.strip()]
         turns = []
         threat_count = 0
         progression_steps = []
-        first_threat_idx = None
 
         for idx, line in enumerate(lines, start=1):
             if ":" in line:
@@ -98,8 +94,6 @@ class MLService:
             is_threat = len(turn_indicators) > 0
             if is_threat:
                 threat_count += 1
-                if first_threat_idx is None:
-                    first_threat_idx = idx
                 ind_names = [ind["name"] for ind in turn_indicators]
                 progression_steps.append(f"Turn {idx} ({speaker}): {', '.join(ind_names[:2])}")
 
@@ -110,23 +104,13 @@ class MLService:
                 "indicators": [ind["name"] for ind in turn_indicators]
             })
 
-        if not progression_steps:
-            progression_summary = "Friendly & Neutral Conversation: Initiated casually and maintained safe dialogue throughout with zero coercion cues."
-            initial_posture = "Friendly / Safe"
-        elif first_threat_idx and first_threat_idx > 1:
-            progression_summary = f"Friendly/Neutral Start (Turns 1–{first_threat_idx - 1}) → Judged Suspicious during conversation: " + " → ".join(progression_steps)
-            initial_posture = "Friendly / Casual Start"
-        else:
-            progression_summary = "Immediate Coercive Approach: " + " → ".join(progression_steps)
-            initial_posture = "Direct Pressure"
+        progression_summary = " → ".join(progression_steps) if progression_steps else "No active coercive turns detected."
 
         return {
             "turns": turns,
             "total_turns": len(turns),
             "suspicious_turns_count": threat_count,
             "coercion_progression": progression_summary,
-            "first_threat_turn": first_threat_idx,
-            "initial_posture": initial_posture,
             "detected_modality": "Multi-turn Telephony Audio Transcript"
         }
 
@@ -197,15 +181,8 @@ class MLService:
 
         # Explainable AI reasoning
         reasons = generate_explanation(prediction, indicators, cat_info["category"])
-        if is_call_transcript and call_analysis:
-            if call_analysis["suspicious_turns_count"] > 0:
-                first_turn = call_analysis.get("first_threat_turn", 1)
-                if first_turn and first_turn > 1:
-                    reasons.insert(0, f"Conversational Shift: Call initiated with neutral/friendly dialogue, but shifted to coercive tactics at Turn {first_turn} ({call_analysis['suspicious_turns_count']} flagged turns).")
-                else:
-                    reasons.insert(0, f"Telephony Coercion Flow: {call_analysis['suspicious_turns_count']} of {call_analysis['total_turns']} speaker turns contain high-risk social engineering markers.")
-            else:
-                reasons.insert(0, "Conversational Trust Evaluation: Call maintained neutral/friendly conversational tone throughout with zero coercive markers.")
+        if is_call_transcript and call_analysis and call_analysis["suspicious_turns_count"] > 0:
+            reasons.insert(0, f"Telephony Coercion Flow: {call_analysis['suspicious_turns_count']} of {call_analysis['total_turns']} speaker turns contain high-risk social engineering markers.")
 
         recommendation = generate_recommendation(prediction, risk_level)
 

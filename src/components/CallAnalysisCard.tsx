@@ -93,7 +93,7 @@ export const CallAnalysisCard: React.FC<CallAnalysisCardProps> = ({
         <div className="p-3.5 bg-slate-950/70 rounded-lg border border-slate-800/80 space-y-2">
           <div className="flex items-center space-x-2 text-xs font-mono font-bold text-slate-300">
             <Activity className="w-3.5 h-3.5 text-cyan-400" />
-            <span className="uppercase tracking-wider">Conversational Trust & Judgment Progression</span>
+            <span className="uppercase tracking-wider">Conversational Coercion Progression</span>
           </div>
           <p className="text-xs text-cyan-200/90 font-mono leading-relaxed bg-slate-900/60 p-2.5 rounded border border-slate-800/60">
             {coercion_progression}
@@ -103,14 +103,9 @@ export const CallAnalysisCard: React.FC<CallAnalysisCardProps> = ({
 
       {/* Turn Breakdown List */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h5 className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider">
-            Turn-by-Turn Conversational Judgment
-          </h5>
-          <span className="text-[10px] font-mono text-slate-500">
-            Starts with friendly trust baseline &rarr; dynamically judged during dialogue
-          </span>
-        </div>
+        <h5 className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider">
+          Turn-by-Turn Threat Inspection
+        </h5>
 
         <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
           {turns.map((turn, idx) => (
@@ -131,11 +126,11 @@ export const CallAnalysisCard: React.FC<CallAnalysisCardProps> = ({
                 {turn.is_threat_turn ? (
                   <span className="flex items-center space-x-1 text-[10px] font-mono text-rose-400 bg-rose-950/50 px-2 py-0.5 rounded border border-rose-800/60 font-semibold">
                     <AlertTriangle className="w-3 h-3" />
-                    <span>{turn.indicators?.join(', ') || 'Suspicious Shift'}</span>
+                    <span>{turn.indicators?.join(', ') || 'Suspicious Turn'}</span>
                   </span>
                 ) : (
                   <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/30 px-2 py-0.5 rounded border border-emerald-900/40">
-                    😊 Friendly / Normal Exchange
+                    Safe Turn
                   </span>
                 )}
               </div>

@@ -321,22 +321,22 @@ export const SAMPLE_CALL_TRANSCRIPTS = [
   {
     id: "call-1",
     label: "Digital Arrest Coercion Call",
-    text: "Caller: Hello, am I speaking with Mr. Rahul?\nReceiver: Yes speaking, how may I help you?\nCaller: I am Inspector Sharma from the Delhi Cyber Crime Police Department. An arrest warrant has been issued in your name for money laundering.\nReceiver: What? That is impossible, there must be a misunderstanding.\nCaller: You are being placed under digital arrest right now. Keep your camera turned on and do not disconnect this call or local police will arrive."
+    text: "Caller: Hello, I am Inspector Sharma from the Delhi Cyber Crime Police Department.\nCaller: An arrest warrant has been issued in your name for money laundering.\nCaller: You are being placed under digital arrest right now. Keep your camera turned on and do not disconnect this call or local police will arrive."
   },
   {
     id: "call-2",
     label: "Bank Account KYC Freeze Call",
-    text: "Caller: Good afternoon sir, I am speaking from your bank's central customer support.\nReceiver: Good afternoon, yes please tell me.\nCaller: We notice that your PAN and Aadhaar KYC documents have expired today. As per RBI regulations, your debit card and net banking will be permanently blocked by 5 PM.\nReceiver: Oh no, how do I stop that from happening?\nCaller: To complete immediate electronic re-verification, please read out the 6-digit verification code just delivered to your mobile."
+    text: "Caller: Good afternoon sir, I am speaking from your bank's central head office.\nCaller: We notice that your PAN and Aadhaar KYC documents have expired today.\nCaller: As per RBI regulations, your debit card and net banking will be permanently blocked by 5 PM.\nCaller: To complete immediate electronic re-verification, please read out the 6-digit verification code just delivered to your mobile."
   },
   {
     id: "call-3",
     label: "Customs Parcel Blackmail Call",
-    text: "Caller: Hello sir, good morning. This is customs parcel clearance officer calling from Mumbai International Airport.\nReceiver: Hello, what parcel is this regarding?\nCaller: We have detained a FedEx parcel addressed to your name containing illegal foreign currency. A legal FIR is being lodged unless you immediately transfer ₹25,000 clearance penalty fee."
+    text: "Caller: Sir, this is customs parcel clearance officer calling from Mumbai International Airport.\nCaller: We have detained a FedEx parcel addressed to your name containing illegal foreign currency.\nCaller: A legal FIR is being lodged unless you immediately transfer ₹25,000 clearance penalty fee."
   },
   {
     id: "call-4",
-    label: "Legitimate Personal Hinglish Call (Safe)",
-    text: "Caller: Haan bhai, main bol raha hoon. Kal project review meeting kitne baje rakha hai?\nReceiver: Kal subah 10 baje rakha hai library mein. Presentation slides ready hai na?\nCaller: Theek hai, main laptop aur presentation slides leke college pahunch jaunga 10 baje.\nReceiver: Done bhai, kal milte hain phir."
+    label: "Legitimate Personal Hinglish Call",
+    text: "Caller: Haan bhai, main bol raha hoon. Kal project review meeting kitne baje rakha hai?\nCaller: Theek hai, main laptop aur presentation slides leke college pahunch jaunga 10 baje."
   }
 ];
 
